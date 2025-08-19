@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auto Estoque</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --primary-red: #d60000;
+            --dark-red: #9c0000;
+            --light-red: #ff3333;
+            --neon-yellow: #fce300;
+            --dark-bg: #121212;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--dark-bg);
+            color: white;
+            overflow-x: hidden;
+        }
+        
+        .bg-particle {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background: radial-gradient(circle at 20% 50%, rgba(214, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.85) 70%);
+        }
+        
+        .nav-link {
+            transition: all 0.3s ease;
+        }
+        
+        .nav-link:hover {
+            color: var(--neon-yellow) !important;
+            transform: translateX(5px);
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-red);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--dark-red);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(214, 0, 0, 0.3);
+        }
+        
+        .btn-accent {
+            background-color: var(--neon-yellow);
+            color: #000;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-accent:hover {
+            background-color: #ffe600;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(252, 227, 0, 0.3);
+        }
+        
+        .card {
+            background: rgba(30, 30, 30, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .input-field {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: var(--neon-yellow);
+            box-shadow: 0 0 0 2px rgba(252, 227, 0, 0.2);
+        }
+        
+        .sidebar {
+            background: rgba(20, 20, 20, 0.8);
+            backdrop-filter: blur(10px);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .status-low {
+            border-left: 4px solid var(--neon-yellow);
+        }
+        
+        .status-critical {
+            border-left: 4px solid var(--primary-red);
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in forwards;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Particle Background (simplified) -->
+    <div class="bg-particle"></div>
+
+    <!-- Login Screen -->
+    <div id="loginScreen" class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-90">
+        <div class="w-full max-w-md p-8 rounded-xl bg-gray-900 border border-gray-800">
+            <div class="flex justify-center mb-8">
+                <div class="text-center">
+                    <img src="https://placehold.co/120x60?text=Auto+Estoque" alt="Logo Auto Estoque em vermelho com detalhes em neon amarelo" class="mx-auto mb-4">
+                    <h1 class="text-3xl font-bold text-white mb-2">Auto Estoque</h1>
+                    <p class="text-gray-400">Gestão de Estoque e Vendas</p>
+                </div>
+            </div>
+            
+            <form id="loginForm">
+                <div class="mb-4">
+                    <label class="block text-gray-400 mb-2">Usuário</label>
+                    <input type="text" id="username" class="w-full px-4 py-3 rounded-lg input-field text-white focus:outline-none" placeholder="Digite seu usuário">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-gray-400 mb-2">Senha</label>
+                    <input type="password" id="password" class="w-full px-4 py-3 rounded-lg input-field text-white focus:outline-none" placeholder="Digite sua senha">
+                </div>
+                <button type="submit" class="w-full py-3 px-4 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition duration-200">
+                    Entrar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App (hidden by default) -->
+    <div id="appContainer" class="hidden">
+        <!-- Sidebar -->
+        <div class="sidebar fixed left-0 top-0 h-screen w-64 overflow-y-auto">
+            <div class="p-4">
+                <div class="flex items-center justify-center mb-8">
+                    <img src="https://placehold.co/120x60?text=Auto+Estoque" alt="Logo Auto Estoque em vermelho" class="h-10">
+                </div>
+                
+                <nav>
+                    <ul class="space-y-2">
+                        <li>
+                            <a href="#" class="nav-link flex items-center px-4 py-3 text-white rounded-lg" onclick="showSection('dashboard')">
+                                <i class="mr-3">📊</i> Dashboard
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="nav-link flex items-center px-4 py-3 text-white rounded-lg" onclick="showSection('vendas')">
+                                <i class="mr-3">🛒</i> Vendas
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="nav-link flex items-center px-4 py-3 text-white rounded-lg" onclick="showSection('estoque')">
+                                <i class="mr-3">📦</i> Estoque
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="nav-link flex items-center px-4 py-3 text-white rounded-lg" onclick="showSection('compras')">
+                                <i class="mr-3">🚚</i> Compras
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="nav-link flex items-center px-4 py-3 text-white rounded-lg" onclick="showSection('relatorios')">
+                                <i class="mr-3">📈</i> Relatórios
+                            </a>
+                        </li>
+                        <li>
+                            <a href="#" class="nav-link flex items-center px-4 py-3 text-white rounded-lg" onclick="showSection('configuracoes')">
+                                <i class="mr-3">⚙️</i> Configurações
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+            
+            <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800">
+                <button onclick="logout()" class="w-full py-2 px-4 bg-gray-800 hover:bg-gray-700 text-white rounded-lg flex items-center justify-center">
+                    <i class="mr-2">🔒</i> Sair
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="ml-64 p-6">
+            <!-- Dashboard Section -->
+            <div id="dashboard" class="section">
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Dashboard</h2>
+                        <p class="text-gray-400">Visão geral do sistema</p>
+                    </div>
+                    <div class="flex items-center">
+                        <div id="currentDate" class="mr-4 px-4 py-2 bg-gray-800 rounded-lg"></div>
+                        <div id="currentTime" class="px-4 py-2 bg-gray-800 rounded-lg"></div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="card p-6 fade-in">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-lg bg-red-900 bg-opacity-30 mr-4">
+                                <i class="text-xl">📦</i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg text-gray-400">Produtos</h3>
+                                <p class="text-2xl font-bold">243</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card p-6 fade-in">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-lg bg-yellow-900 bg-opacity-30 mr-4">
+                                <i class="text-xl">⚠️</i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg text-gray-400">Baixo Estoque</h3>
+                                <p class="text-2xl font-bold">12</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card p-6 fade-in">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-lg bg-green-900 bg-opacity-30 mr-4">
+                                <i class="text-xl">💰</i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg text-gray-400">Vendas Hoje</h3>
+                                <p class="text-2xl font-bold">R$ 8.742</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card p-6 fade-in">
+                        <div class="flex items-center">
+                            <div class="p-3 rounded-lg bg-blue-900 bg-opacity-30 mr-4">
+                                <i class="text-xl">🔄</i>
+                            </div>
+                            <div>
+                                <h3 class="text-lg text-gray-400">Pedidos</h3>
+                                <p class="text-2xl font-bold">14</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <div class="card p-6 fade-in">
+                        <h3 class="text-lg font-semibold mb-4">Produtos Mais Vendidos</h3>
+                        <div class="h-64">
+                            <img src="https://placehold.co/600x300?text=Gr%C3%A1fico+de+Vendas" alt="Gráfico de barras mostrando os produtos mais vendidos" class="w-full h-full object-cover rounded-lg">
+                        </div>
+                    </div>
+                    
+                    <div class="card p-6 fade-in">
+                        <h3 class="text-lg font-semibold mb-4">Estoque Crítico</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="text-left border-b border-gray-700">
+                                        <th class="pb-2">Produto</th>
+                                        <th class="pb-2">Estoque</th>
+                                        <th class="pb-2">Mínimo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-gray-800">
+                                        <td class="py-3">Pneu 175/70 R13 Remold</td>
+                                        <td class="py-3 text-red-500">4</td>
+                                        <td class="py-3">10</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-800">
+                                        <td class="py-3">Pastilha de Freio Dianteira</td>
+                                        <td class="py-3 text-yellow-500">6</td>
+                                        <td class="py-3">15</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-800">
+                                        <td class="py-3">Óleo de Motor 20W50</td>
+                                        <td class="py-3 text-red-500">3</td>
+                                        <td class="py-3">12</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3">Lâmpada H4</td>
+                                        <td class="py-3 text-yellow-500">8</td>
+                                        <td class="py-3">20</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vendas Section -->
+            <div id="vendas" class="section hidden">
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Vendas</h2>
+                        <p class="text-gray-400">Registro de vendas e emissão de notas</p>
+                    </div>
+                    <button class="btn-primary px-4 py-2 rounded-lg flex items-center">
+                        <i class="mr-2">➕</i> Nova Venda
+                    </button>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    <div class="card p-6 lg:col-span-2 fade-in">
+                        <h3 class="text-lg font-semibold mb-4">Registrar Venda</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-gray-400 mb-2">Cliente</label>
+                                <input type="text" class="w-full px-4 py-3 rounded-lg input-field text-white" placeholder="Nome do cliente (opcional)">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-gray-400 mb-2">Produto</label>
+                                <div class="flex">
+                                    <input type="text" id="produtoSearch" class="w-full px-4 py-3 rounded-l-lg input-field text-white" placeholder="Nome ou código SKU" onkeyup="searchProducts()">
+                                    <button class="px-4 bg-gray-700 rounded-r-lg">🔍</button>
+                                </div>
+                                <div id="produtoResults" class="mt-2 hidden">
+                                    <!-- Resultados da busca aparecerão aqui -->
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-gray-400 mb-2">Quantidade</label>
+                                    <input type="number" class="w-full px-4 py-3 rounded-lg input-field text-white" value="1" min="1">
+                                </div>
+                                <div>
+                                    <label class="block text-gray-400 mb-2">Preço Unitário</label>
+                                    <input type="number" class="w-full px-4 py-3 rounded-lg input-field text-white" placeholder="R$ 0,00">
+                                </div>
+                            </div>
+                            
+                            <button class="btn-accent w-full py-3 rounded-lg font-semibold">
+                                Adicionar ao Carrinho
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="card p-6 fade-in">
+                        <h3 class="text-lg font-semibold mb-4">Carrinho</h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-400">Itens:</span>
+                                <span class="font-bold">3</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-400">Total:</span>
+                                <span class="font-bold text-xl">R$ 1.257,90</span>
+                            </div>
+                            <div class="h-48 overflow-y-auto mb-4">
+                                <!-- Lista de itens no carrinho -->
+                                <div class="flex justify-between items-center py-2 border-b border-gray-800">
+                                    <div>
+                                        <p class="font-medium">Pneu 175/70 R13 Remold</p>
+                                        <p class="text-sm text-gray-400">2 x R$ 259,90</p>
+                                    </div>
+                                    <div class="text-red-500 cursor-pointer">🗑️</div>
+                                </div>
+                                <div class="flex justify-between items-center py-2 border-b border-gray-800">
+                                    <div>
+                                        <p class="font-medium">Óleo de Motor 20W50</p>
+                                        <p class="text-sm text-gray-400">1 x R$ 29,90</p>
+                                    </div>
+                                    <div class="text-red-500 cursor-pointer">🗑️</div>
+                                </div>
+                                <div class="flex justify-between items-center py-2">
+                                    <div>
+                                        <p class="font-medium">Pastilha de Freio</p>
+                                        <p class="text-sm text-gray-400">1 x R$ 129,90</p>
+                                    </div>
+                                    <div class="text-red-500 cursor-pointer">🗑️</div>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-2">
+                                <button class="py-2 bg-gray-700 rounded-lg">Cancelar</button>
+                                <button class="py-2 btn-primary rounded-lg">Finalizar Venda</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card p-6 fade-in">
+                    <h3 class="text-lg font-semibold mb-4">Histórico de Vendas</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="text-left border-b border-gray-700">
+                                    <th class="pb-2">Data/Hora</th>
+                                    <th class="pb-2">Cliente</th>
+                                    <th class="pb-2">Itens</th>
+                                    <th class="pb-2">Total</th>
+                                    <th class="pb-2">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-gray-800">
+                                    <td class="py-3">15/06/2023 14:30</td>
+                                    <td class="py-3">Cliente Não Identificado</td>
+                                    <td class="py-3">3</td>
+                                    <td class="py-3">R$ 1.750,00</td>
+                                    <td class="py-3">
+                                        <button class="px-3 py-1 bg-gray-700 rounded-md">Detalhes</button>
+                                        <button class="px-3 py-1 bg-gray-700 rounded-md ml-2">NF</button>
+                                    </td>
+                                </tr>
+                                <tr class="border-b border-gray-800">
+                                    <td class="py-3">15/06/2023 11:15</td>
+                                    <td class="py-3">João Silva (CPF: ***.123.456-**)</td>
+                                    <td class="py-3">5</td>
+                                    <td class="py-3">R$ 2.450,00</td>
+                                    <td class="py-3">
+                                        <button class="px-3 py-1 bg-gray-700 rounded-md">Detalhes</button>
+                                        <button class="px-3 py-1 bg-gray-700 rounded-md ml-2">NF</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="py-3">14/06/2023 16:45</td>
+                                    <td class="py-3">Maria Souza</td>
+                                    <td class="py-3">2</td>
+                                    <td class="py-3">R$ 890,00</td>
+                                    <td class="py-3">
+                                        <button class="px-3 py-1 bg-gray-700 rounded-md">Detalhes</button>
+                                        <button class="px-3 py-1 bg-gray-700 rounded-md ml-2">NF</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="flex justify-between items-center mt-4">
+                        <span class="text-gray-400">Mostrando 1-5 de 43 vendas</span>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 bg-gray-700 rounded-md">Anterior</button>
+                            <button class="px-3 py-1 bg-gray-700 rounded-md">1</button>
+                            <button class="px-3 py-1 btn-primary rounded-md">2</button>
+                            <button class="px-3 py-1 bg-gray-700 rounded-md">3</button>
+                            <button class="px-3 py-1 bg-gray-700 rounded-md">Próxima</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Estoque Section -->
+            <div id="estoque" class="section hidden">
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Estoque</h2>
+                        <p class="text-gray-400">Gestão de produtos e alertas</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="px-4 py-2 bg-gray-700 rounded-lg flex items-center">
+                            <i class="mr-2">📥</i> Importar
+                        </button>
+                        <button class="px-4 py-2 btn-primary rounded-lg flex items-center" onclick="showAddProductModal()">
+                            <i class="mr-2">➕</i> Adicionar Produto
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="card p-6 mb-8 fade-in">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold">Todos os Produtos</h3>
+                        <div class="flex">
+                            <input type="text" class="px-4 py-2 rounded-l-lg input-field text-white" placeholder="Buscar produtos...">
+                            <button class="px-4 py-2 bg-gray-700 rounded-r-lg">🔍</button>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="text-left border-b border-gray-700">
+                                    <th class="pb-2">Código</th>
+                                    <th class="pb-2">Produto</th>
+                                    <th class="pb-2">Categoria</th>
+                                    <th class="pb-2">Estoque</th>
+                                    <th class="pb-2">Mínimo</th>
+                                    <th class="pb-2">Preço</th>
+                                    <th class="pb-2">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-gray-800 hover:bg-gray-800">
+                                    <td class="py-3">PN17570R13</td>
+                                    <td class="py-3">Pneu 175/70 R13 Remold</td>
+                                    <td class="py-3">Pneus</td>
+                                    <td class="py-3">4 <span class="text-red-500 ml-2">(!)</span></td>
+                                    <td class="py-3">10</td>
+                                    <td class="py-3">R$ 259,90</td>
+                                    <td class="py-3">
+                                        <button class="p-1 bg-gray-700 rounded-md mr-1">✏️</button>
+                                        <button class="p-1 bg-gray-700 rounded-md">🗑️</button>
+                                    </td>
+                                </tr>
+                                <tr class="border-b border-gray-800 hover:bg-gray-800 status-low">
+                                    <td class="py-3">OL20W50</td>
+                                    <td class="py-3">Óleo de Motor 20W50</td>
+                                    <td class="py-3">Motor</td>
+                                    <td class="py-3">3 <span class="text-red-500 ml-2">(!)</span></td>
+                                    <td class="py-3">12</td>
+                                    <td class="py-3">R$ 29,90</td>
+                                    <td class="py-3">
+                                        <button class="p-1 bg-gray-700 rounded-md mr-1">✏️</button>
+                                        <button class="p-1 bg-gray-700 rounded-md">🗑️</button>
+                                    </td>
+                                </tr>
+                                <tr class="border-b border-gray-800 hover:bg-gray-800">
+                                    <td class="py-3">PTFRDTR</td>
+                                    <td class="py-3">Pastilha de Freio Dianteira</td>
+                                    <td class="py-3">Freio</td>
+                                    <td class="py-3">6 <span class="text-yellow-500 ml-2">(!)</span></td>
+                                    <td class="py-3">15</td>
+                                    <td class="py-3">R$ 129,90</td>
+                                    <td class="py-3">
+                                        <button class="p-1 bg-gray-700 rounded-md mr-1">✏️</button>
+                                        <button class="p-1 bg-gray-700 rounded-md">🗑️</button>
+                                    </td>
+                                </tr>
+                                <tr class="border-b border-gray-800 hover:bg-gray-800">
+                                    <td class="py-3">LPTH4</td>
+                                    <td class="py-3">Lâmpada H4</td>
+                                    <td class="py-3">Outros</td>
+                                    <td class="py-3">8 <span class="text-yellow-500 ml-2">(!)</span></td>
+                                    <td class="py-3">20</td>
+                                    <td class="py-3">R$ 39,90</td>
+                                    <td class="py-3">
+                                        <button class="p-1 bg-gray-700 rounded-md mr-1">✏️</button>
+                                        <button class="p-1 bg-gray-700 rounded-md">🗑️</button>
+                                    </td>
+                                </tr>
+                                <!-- Mais produtos... -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="flex justify-between items-center mt-4">
+                        <span class="text-gray-400">Mostrando 1-10 de 243 produtos</span>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 bg-gray-700 rounded-md">Anterior</button>
+                            <button class="px-3 py-1 btn-primary rounded-md">1</button>
+                            <button class="px-3 py-1 bg-gray-700 rounded-md">2</button>
+                            <button class="px-3 py-1 bg-gray-700 rounded-md">Próxima</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="card p-6 fade-in">
+                        <h3 class="text-lg font-semibold mb-4">Alertas de Estoque</h3>
+                        <div class="space-y-3">
+                            <div class="p-3 bg-red-900 bg-opacity-30 rounded-lg flex items-center">
+                                <div class="w-3 h-3 rounded-full bg-red-500 mr-3"></div>
+                                <div>
+                                    <p class="font-medium">Pneu 175/70 R13 Remold - Estoque crítico!</p>
+                                    <p class="text-sm text-gray-400">4 em estoque (mínimo: 10)</p>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-red-900 bg-opacity-30 rounded-lg flex items-center">
+                                <div class="w-3 h-3 rounded-full bg-red-500 mr-3"></div>
+                                <div>
+                                    <p class="font-medium">Óleo de Motor 20W50 - Estoque crítico!</p>
+                                    <p class="text-sm text-gray-400">3 em estoque (mínimo: 12)</p>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-yellow-900 bg-opacity-30 rounded-lg flex items-center">
+                                <div class="w-3 h-3 rounded-full bg-yellow-500 mr-3"></div>
+                                <div>
+                                    <p class="font-medium">Pastilha de Freio Dianteira - Estoque baixo</p>
+                                    <p class="text-sm text-gray-400">6 em estoque (mínimo: 15)</p>
+                                </div>
+                            </div>
+                            <div class="p-3 bg-yellow-900 bg-opacity-30 rounded-lg flex items-center">
+                                <div class="w-3 h-3 rounded-full bg-yellow-500 mr-3"></div>
+                                <div>
+                                    <p class="font-medium">Lâmpada H4 - Estoque baixo</p>
+                                    <p class="text-sm text-gray-400">8 em estoque (mínimo: 20)</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card p-6 fade-in">
+                        <h3 class="text-lg font-semibold mb-4">Categorias de Produtos</h3>
+                        <div class="h-64">
+                            <img src="https://placehold.co/600x300?text=Gr%C3%A1fico+de+Categorias" alt="Gráfico de pizza mostrando distribuição de produtos por categoria" class="w-full h-full object-cover rounded-lg">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Compras Section -->
+            <div id="compras" class="section hidden">
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Compras</h2>
+                        <p class="text-gray-400">Gestão de fornecedores e reposição</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="px-4 py-2 bg-gray-700 rounded-lg flex items-center" onclick="showAddSupplierModal()">
+                            <i class="mr-2">🏭</i> Novo Fornecedor
+                        </button>
+                        <button class="px-4 py-2 btn-primary rounded-lg flex items-center" onclick="showNewOrderModal()">
+                            <i class="mr-2">🛒</i> Novo Pedido
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+                    <div class="card p-6 lg:col-span-2 fade-in">
+                        <h3 class="text-lg font-semibold mb-4">Pedidos Recentes</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="text-left border-b border-gray-700">
+                                        <th class="pb-2">Nº Pedido</th>
+                                        <th class="pb-2">Fornecedor</th>
+                                        <th class="pb-2">Data</th>
+                                        <th class="pb-2">Status</th>
+                                        <th class="pb-2">Valor</th>
+                                        <th class="pb-2">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-gray-800">
+                                        <td class="py-3">#1024</td>
+                                        <td class="py-3">Pneus do Brasil</td>
+                                        <td class="py-3">14/06/2023</td>
+                                        <td class="py-3"><span class="px-2 py-1 bg-green-900 text-green-400 rounded-md">Recebido</span></td>
+                                        <td class="py-3">R$ 5.890,00</td>
+                                        <td class="py-3">
+                                            <button class="px-3 py-1 bg-gray-700 rounded-md">Detalhes</button>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-b border-gray-800">
+                                        <td class="py-3">#1023</td>
+                                        <td class="py-3">Peças Master</td>
+                                        <td class="py-3">10/06/2023</td>
+                                        <td class="py-3"><span class="px-2 py-1 bg-blue-900 text-blue-400 rounded-md">Em Trânsito</span></td>
+                                        <td class="py-3">R$ 3.245,90</td>
+                                        <td class="py-3">
+                                            <button class="px-3 py-1 bg-gray-700 rounded-md">Detalhes</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3">#1022</td>
+                                        <td class="py-3">Auto Óleos</td>
+                                        <td class="py-3">05/06/2023</td>
+                                        <td class="py-3"><span class="px-2 py-1 bg-green-900 text-green-400 rounded-md">Recebido</span></td>
+                                        <td class="py-3">R$ 890,00</td>
+                                        <td class="py-3">
+                                            <button class="px-3 py-1 bg-gray-700 rounded-md">Detalhes</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="card p-6 fade-in">
+                        <h3 class="text-lg font-semibold mb-4">Fornecedores</h3>
+                        <div class="space-y-4">
+                            <div class="p-4 bg-gray-800 rounded-lg" onclick="showSupplierDetails(1)">
+                                <h4 class="font-semibold">Pneus do Brasil</h4>
+                                <p class="text-sm text-gray-400">CNPJ: 12.345.678/0001-99</p>
+                            </div>
+                            <div class="p-4 bg-gray-800 rounded-lg" onclick="showSupplierDetails(2)">
+                                <h4 class="font-semibold">Peças Master</h4>
+                                <p class="text-sm text-gray-400">CNPJ: 98.765.432/0001-11</p>
+                            </div>
+                            <div class="p-4 bg-gray-800 rounded-lg" onclick="showSupplierDetails(3)">
+                                <h4 class="font-semibold">Auto Óleos</h4>
+                                <p class="text-sm text-gray-400">CNPJ: 23.456.789/0001-22</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card p-6 fade-in">
+                    <h3 class="text-lg font-semibold mb-4">Sugestões de Compra</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="text-left border-b border-gray-700">
+                                    <th class="pb-2">Produto</th>
+                                    <th class="pb-2">Estoque</th>
+                                    <th class="pb-2">Mínimo</th>
+                                    <th class="pb-2">Último Preço</th>
+                                    <th class="pb-2">Fornecedor</th>
+                                    <th class="pb-2">Ações</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="border-b border-gray-800">
+                                    <td class="py-3">Pneu 175/70 R13 Remold</td>
+                                    <td class="py-3 text-red-500">4</td>
+                                    <td class="py-3">10</td>
+                                    <td class="py-3">R$ 215,90</td>
+                                    <td class="py-3">Pneus do Brasil</td>
+                                    <td class="py-3">
+                                        <button class="px-3 py-1 bg-gray-700 rounded-md">Comprar</button>
+                                    </td>
+                                </tr>
+                                <tr class="border-b border-gray-800">
+                                    <td class="py-3">Óleo de Motor 20W50</td>
+                                    <td class="py-3 text-red-500">3</td>
+                                    <td class="py-3">12</td>
+                                    <td class="py-3">R$ 18,50</td>
+                                    <td class="py-3">Auto Óleos</td>
+                                    <td class="py-3">
+                                        <button class="px-3 py-1 bg-gray-700 rounded-md">Comprar</button>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="py-3">Pastilha de Freio Dianteira</td>
+                                    <td class="py-3 text-yellow-500">6</td>
+                                    <td class="py-3">15</td>
+                                    <td class="py-3">R$ 95,90</td>
+                                    <td class="py-3">Peças Master</td>
+                                    <td class="py-3">
+                                        <button class="px-3 py-1 bg-gray-700 rounded-md">Comprar</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Relatórios Section -->
+            <div id="relatorios" class="section hidden">
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Relatórios</h2>
+                        <p class="text-gray-400">Analytics e exportação de dados</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="px-4 py-2 bg-gray-700 rounded-lg flex items-center">
+                            <i class="mr-2">📊</i> Exportar
+                        </button>
+                        <button class="px-4 py-2 btn-primary rounded-lg flex items-center">
+                            <i class="mr-2">🔄</i> Atualizar
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="card p-6 fade-in">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold">Vendas</h3>
+                            <select class="px-3 py-1 rounded-lg input-field text-white">
+                                <option>Últimos 7 dias</option>
+                                <option>Últimos 30 dias</option>
+                                <option selected>Mês Atual</option>
+                                <option>Semestre</option>
+                                <option>Anual</option>
+                            </select>
+                        </div>
+                        <div class="h-64">
+                            <img src="https://placehold.co/600x300?text=Gr%C3%A1fico+de+Vendas" alt="Gráfico de linhas mostrando evolução de vendas nos últimos 30 dias" class="w-full h-full object-cover rounded-lg">
+                        </div>
+                    </div>
+                    
+                    <div class="card p-6 fade-in">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold">Entrada/Saída</h3>
+                            <select class="px-3 py-1 rounded-lg input-field text-white">
+                                <option>Últimos 7 dias</option>
+                                <option>Últimos 30 dias</option>
+                                <option selected>Mês Atual</option>
+                                <option>Semestre</option>
+                                <option>Anual</option>
+                            </select>
+                        </div>
+                        <div class="h-64">
+                            <img src="https://placehold.co/600x300?text=Gr%C3%A1fico+de+Balan%C3%A7o" alt="Gráfico de barras mostrando compras versus vendas" class="w-full h-full object-cover rounded-lg">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card p-6 fade-in">
+                    <h3 class="text-lg font-semibold mb-4">Exportar Dados</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div class="p-4 bg-gray-800 rounded-lg">
+                            <div class="flex items-center mb-3">
+                                <div class="p-2 rounded-lg bg-red-900 bg-opacity-30 mr-3">
+                                    <i>📝</i>
+                                </div>
+                                <h4 class="font-semibold">Relatório de Vendas</h4>
+                            </div>
+                            <p class="text-sm text-gray-400 mb-3">Exporte dados detalhados de vendas por período</p>
+                            <div class="flex space-x-2">
+                                <button class="px-3 py-1 bg-gray-700 rounded-md text-sm">PDF</button>
+                                <button class="px-3 py-1 bg-gray-700 rounded-md text-sm">CSV</button>
+                                <button class="px-3 py-1 bg-gray-700 rounded-md text-sm">XML</button>
+                            </div>
+                        </div>
+                        
+                        <div class="p-4 bg-gray-800 rounded-lg">
+                            <div class="flex items-center mb-3">
+                                <div class="p-2 rounded-lg bg-blue-900 bg-opacity-30 mr-3">
+                                    <i>🛒</i>
+                                </div>
+                                <h4 class="font-semibold">Relatório de Compras</h4>
+                            </div>
+                            <p class="text-sm text-gray-400 mb-3">Exporte dados detalhados de compras por período</p>
+                            <div class="flex space-x-2">
+                                <button class="px-3 py-1 bg-gray-700 rounded-md text-sm">PDF</button>
+                                <button class="px-3 py-1 bg-gray-700 rounded-md text-sm">CSV</button>
+                                <button class="px-3 py-1 bg-gray-700 rounded-md text-sm">XML</button>
+                            </div>
+                        </div>
+                        
+                        <div class="p-4 bg-gray-800 rounded-lg">
+                            <div class="flex items-center mb-3">
+                                <div class="p-2 rounded-lg bg-green-900 bg-opacity-30 mr-3">
+                                    <i>📦</i>
+                                </div>
+                                <h4 class="font-semibold">Inventário Atual</h4>
+                            </div>
+                            <p class="text-sm text-gray-400 mb-3">Exporte a lista completa de produtos em estoque</p>
+                            <div class="flex space-x-2">
+                                <button class="px-3 py-1 bg-gray-700 rounded-md text-sm">PDF</button>
+                                <button class="px-3 py-1 bg-gray-700 rounded-md text-sm">CSV</button>
+                                <button class="px-3 py-1 bg-gray-700 rounded-md text-sm">XML</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configurações Section -->
+            <div id="configuracoes" class="section hidden">
+                <div class="flex justify-between items-center mb-8">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Configurações</h2>
+                        <p class="text-gray-400">Administração do sistema</p>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                    <div class="card p-6 fade-in">
+                        <h3 class="text-lg font-semibold mb-4">Usuários</h3>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead>
+                                    <tr class="text-left border-b border-gray-700">
+                                        <th class="pb-2">Nome</th>
+                                        <th class="pb-2">Usuário</th>
+                                        <th class="pb-2">Permissão</th>
+                                        <th class="pb-2">Último Acesso</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="border-b border-gray-800">
+                                        <td class="py-3">Yanna Silva</td>
+                                        <td class="py-3">yanna</td>
+                                        <td class="py-3"><span class="px-2 py-1 bg-red-900 text-red-400 rounded-md">Admin</span></td>
+                                        <td class="py-3">Hoje, 09:15</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-800">
+                                        <td class="py-3">Beatriz Oliveira</td>
+                                        <td class="py-3">beatriz</td>
+                                        <td class="py-3"><span class="px-2 py-1 bg-blue-900 text-blue-400 rounded-md">Gerente</span></td>
+                                        <td class="py-3">Hoje, 08:30</td>
+                                    </tr>
+                                    <tr class="border-b border-gray-800">
+                                        <td class="py-3">Maria Luisa</td>
+                                        <td class="py-3">maria</td>
+                                        <td class="py-3"><span class="px-2 py-1 bg-green-900 text-green-400 rounded-md">Vendedor</span></td>
+                                        <td class="py-3">14/06/2023</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="py-3">Thainá Costa</td>
+                                        <td class="py-3">thaina</td>
+                                        <td class="py-3"><span class="px-2 py-1 bg-green-900 text-green-400 rounded-md">Vendedor</span></td>
+                                        <td class="py-3">12/06/2023</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <button class="mt-4 px-4 py-2 btn-primary rounded-lg flex items-center mx-auto">
+                            <i class="mr-2">➕</i> Adicionar Usuário
+                        </button>
+                    </div>
+                    
+                    <div class="card p-6 fade-in">
+                        <h3 class="text-lg font-semibold mb-4">Backup</h3>
+                        <div class="space-y-4">
+                            <div class="p-4 bg-gray-800 rounded-lg">
+                                <div class="flex items-center mb-2">
+                                    <i class="mr-3">💾</i>
+                                    <h4 class="font-semibold">Backup Completo</h4>
+                                </div>
+                                <p class="text-sm text-gray-400 mb-3">Realize um backup de todos os dados do sistema</p>
+                                <button class="w-full py-2 btn-primary rounded-lg">Gerar Backup</button>
+                            </div>
+                            
+                            <div class="p-4 bg-gray-800 rounded-lg">
+                                <div class="flex items-center mb-2">
+                                    <i class="mr-3">🔄</i>
+                                    <h4 class="font-semibold">Restaurar</h4>
+                                </div>
+                                <p class="text-sm text-gray-400 mb-3">Restaurar sistema a partir de um backup</p>
+                                <button class="w-full py-2 bg-gray-700 rounded-lg">Selecionar Arquivo</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card p-6 fade-in">
+                    <h3 class="text-lg font-semibold mb-4">Configurações do Sistema</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-gray-400 mb-2">Nome da Empresa</label>
+                            <input type="text" class="w-full px-4 py-3 rounded-lg input-field text-white" value="Auto Estoque">
+                        </div>
+                        <div>
+                            <label class="block text-gray-400 mb-2">Número de Série</label>
+                            <input type="text" class="w-full px-4 py-3 rounded-lg input-field text-white" value="AE-2023-001" disabled>
+                        </div>
+                        <div>
+                            <label class="block text-gray-400 mb-2">Endereço</label>
+                            <input type="text" class="w-full px-4 py-3 rounded-lg input-field text-white" value="Av. Automotiva, 1234">
+                        </div>
+                        <div>
+                            <label class="block text-gray-400 mb-2">CNPJ</label>
+                            <input type="text" class="w-full px-4 py-3 rounded-lg input-field text-white" value="12.345.678/0001-99">
+                        </div>
+                        <div class="md:col-span-2">
+                            <button class="px-4 py-2 btn-primary rounded-lg">Salvar Configurações</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Add Product -->
+    <div id="addProductModal" class="modal hidden fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-80">
+        <div class="relative w-full max-w-3xl bg-gray-900 rounded-xl p-8 overflow-y-auto" style="max-height: 90vh;">
+            <button onclick="hideModal('addProductModal')" class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-800">
+                ✖
+            </button>
+            
+            <h2 class="text-2xl font-bold mb-6">Adicionar Novo Produto</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <div>
+                    <label class="block text-gray-400 mb-2">Nome do Produto</label>
+                    <input type="text" class="w-full px-4 py-3 rounded-lg input-field text-white" placeholder="Ex: Pneu 175/70 R13 Remold">
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-2">Código SKU</label>
+                    <input type="text" class="w-full px-4 py-3 rounded-lg input-field text-white" placeholder="Ex: PN17570R13">
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-2">Categoria</label>
+                    <select class="w-full px-4 py-3 rounded-lg input-field text-white">
+                        <option value="">Selecione...</option>
+                        <option>Pneus</option>
+                        <option>Freio</option>
+                        <option>Suspensão</option>
+                        <option>Motor</option>
+                        <option>Outros</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-2">Foto do Produto</label>
+                    <div class="flex items-center">
+                        <input type="file" id="productImage" class="hidden">
+                        <label for="productImage" class="px-4 py-3 bg-gray-800 rounded-lg cursor-pointer">
+                            Selecionar Imagem
+                        </label>
+                        <span id="fileName" class="ml-2 text-gray-400">Nenhum arquivo selecionado</span>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-2">Preço de Venda</label>
+                    <input type="number" class="w-full px-4 py-3 rounded-lg input-field text-white" placeholder="R$ 0,00" step="0.01">
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-2">Preço de Custo</label>
+                    <input type="number" class="w-full px-4 py-3 rounded-lg input-field text-white" placeholder="R$ 0,00" step="0.01">
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-2">Quantidade em Estoque</label>
+                    <input type="number" class="w-full px-4 py-3 rounded-lg input-field text-white" placeholder="0" min="0">
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-2">Quantidade Mínima</label>
+                    <input type="number" class="w-full px-4 py-3 rounded-lg input-field text-white" placeholder="0" min="0">
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <label class="block text-gray-400 mb-2">Descrição</label>
+                <textarea class="w-full px-4 py-3 rounded-lg input-field text-white h-24" placeholder="Detalhes do produto..."></textarea>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button onclick="hideModal('addProductModal')" class="px-4 py-2 bg-gray-700 rounded-lg">
+                    Cancelar
+                </button>
+                <button class="px-4 py-2 btn-primary rounded-lg">
+                    Salvar Produto
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for Add Supplier -->
+    <div id="addSupplierModal" class="modal hidden fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-80">
+        <div class="relative w-full max-w-2xl bg-gray-900 rounded-xl p-8">
+            <button onclick="hideModal('addSupplierModal')" class="absolute top-4 right-4 p-2 rounded-full hover:bg-gray-800">
+                ✖
+            </button>
+            
+            <h2 class="text-2xl font-bold mb-6">Novo Fornecedor</h2>
+            
+            <div class="grid grid-cols-1 gap-4 mb-6">
+                <div>
+                    <label class="block text-gray-400 mb-2">Nome do Fornecedor</label>
+                    <input type="text" class="w-full px-4 py-3 rounded-lg input-field text-white" placeholder="Ex: Pneus do Brasil">
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-2">CNPJ</label>
+                    <input type="text" class="w-full px-4 py-3 rounded-lg input-field text-white" placeholder="00.000.000/0001-00">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-400 mb-2">Telefone</label>
+                        <input type="tel" class="w-full px-4 py-3 rounded-lg input-field text-white" placeholder="(00) 0000-0000">
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-2">E-mail</label>
+                        <input type="email" class="w-full px-4 py-3 rounded-lg input-field text-white" placeholder="contato@fornecedor.com">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-2">Endereço</label>
+                    <input type="text" class="w-full px-4 py-3 rounded-lg input-field text-white" placeholder="Rua, número, complemento">
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-gray-400 mb-2">CEP</label>
+                        <input type="text" class="w-full px-4 py-3 rounded-lg input-field text-white" placeholder="00000-000">
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-2">Cidade</label>
+                        <input type="text" class="w-full px-4 py-3 rounded-lg input-field text-white" placeholder="Cidade">
+                    </div>
+                    <div>
+                        <label class="block text-gray-400 mb-2">Estado</label>
+                        <select class="w-full px-4 py-3 rounded-lg input-field text-white">
+                            <option value="">Selecione...</option>
+                            <option>AC</option>
+                            <option>AL</option>
+                            <!-- outros estados... -->
+                            <option>SP</option>
+                            <option>TO</option>
+                        </select>
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-gray-400 mb-2">Observações</label>
+                    <textarea class="w-full px-4 py-3 rounded-lg input-field text-white h-20" placeholder="Informações adicionais..."></textarea>
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button onclick="hideModal('addSupplierModal')" class="px-4 py-2 bg-gray-700 rounded-lg">
+                    Cancelar
+                </button>
+                <button class="px-4 py-2 btn-primary rounded-lg">
+                    Salvar Fornecedor
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variáveis globais para armazenar dados localmente
+        const database = {
+            products: [],
+            sales: [],
+            purchases: [],
+            suppliers: [],
+            users: []
+        };
+
+        // Função para mostrar/esconder seções
+        function showSection(sectionId) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById(sectionId).classList.remove('hidden');
+        }
+
+        // Função de login
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            
+            // Usuários válidos
+            const validUsers = {
+                'Yanna': '1234',
+                'Beatriz': '1234',
+                'Maria Luisa': '1234',
+                'Thainá': '1234'
+            };
+            
+            if (validUsers[username] && validUsers[username] === password) {
+                document.getElementById('loginScreen').classList.add('hidden');
+                document.getElementById('appContainer').classList.remove('hidden');
+                
+                // Mostrar dashboard por padrão
+                showSection('dashboard');
+                updateDateTime();
+                setInterval(updateDateTime, 60000);
+            } else {
+                alert('Usuário ou senha inválidos');
+            }
+        });
+
+        // Função para logout
+        function logout() {
+            document.getElementById('appContainer').classList.add('hidden');
+            document.getElementById('loginScreen').classList.remove('hidden');
+            
+            // Limpar campos de login
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+        }
+
+        // Função para mostrar modal
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+
+        // Função para esconder modal
+        function hideModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        // Atualizar data e hora
+        function updateDateTime() {
+            const now = new Date();
+            const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('currentDate').textContent = now.toLocaleDateString('pt-BR', options);
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString('pt-BR');
+        }
+
+        // Mostrar modal de adicionar produto
+        function showAddProductModal() {
+            showModal('addProductModal');
+        }
+
+        // Mostrar modal de adicionar fornecedor
+        function showAddSupplierModal() {
+            showModal('addSupplierModal');
+        }
+
+        // Mostrar modal de novo pedido
+        function showNewOrderModal() {
+            alert("Modal de novo pedido será implementado");
+        }
+
+        // Mostrar detalhes do fornecedor
+        function showSupplierDetails(id) {
+            alert(`Detalhes do fornecedor ${id} serão implementados`);
+        }
+
+        // Inicializar o sistema
+        document.addEventListener('DOMContentLoaded', function() {
+            // Carregar dados iniciais
+            loadSampleData();
+        });
+
+        // Carregar dados de exemplo
+        function loadSampleData() {
+            database.products = [
+                { id: 1, sku: 'PN17570R13', name: 'Pneu 175/70 R13 Remold', category: 'Pneus', stock: 4, minStock: 10, price: 259.90, cost: 215.90 },
+                { id: 2, sku: 'OL20W50', name: 'Óleo de Motor 20W50', category: 'Motor', stock: 3, minStock: 12, price: 29.90, cost: 18.50 },
+                { id: 3, sku: 'PTFRDTR', name: 'Pastilha de Freio Dianteira', category: 'Freio', stock: 6, minStock: 15, price: 129.90, cost: 95.90 },
+                { id: 4, sku: 'LPTH4', name: 'Lâmpada H4', category: 'Outros', stock: 8, minStock: 20, price: 39.90, cost: 28.00 }
+            ];
+
+            database.sales = [
+                { id: 1, date: '15/06/2023 14:30', customer: 'Cliente Não Identificado', items: 3, total: 1750.00 },
+                { id: 2, date: '15/06/2023 11:15', customer: 'João Silva', items: 5, total: 2450.00 },
+                { id: 3, date: '14/06/2023 16:45', customer: 'Maria Souza', items: 2, total: 890.00 }
+            ];
+
+            database.purchases = [
+                { id: 1, supplier: 'Pneus do Brasil', date: '14/06/2023', status: 'Recebido', total: 5890.00 },
+                { id: 2, supplier: 'Peças Master', date: '10/06/2023', status: 'Em Trânsito', total: 3245.90 },
+                { id: 3, supplier: 'Auto Óleos', date: '05/06/2023', status: 'Recebido', total: 890.00 }
+            ];
+
+            database.suppliers = [
+                { id: 1, name: 'Pneus do Brasil', cnpj: '12.345.678/0001-99', phone: '(11) 4004-1234', email: 'contato@pneusdobrasil.com.br', address: 'Av. dos Pneus, 1000 - São Paulo/SP' },
+                { id: 2, name: 'Peças Master', cnpj: '98.765.432/0001-11', phone: '(11) 2345-6789', email: 'contato@pecasmaster.com.br', address: 'Rua das Peças, 500 - São Paulo/SP' },
+                { id: 3, name: 'Auto Óleos', cnpj: '23.456.789/0001-22', phone: '(11) 3456-7890', email: 'contato@autooleos.com.br', address: 'Alameda dos Óleos, 300 - São Paulo/SP' }
+            ];
+
+            database.users = [
+                { id: 1, name: 'Yanna Silva', username: 'yanna', role: 'Admin' },
+                { id: 2, name: 'Beatriz Oliveira', username: 'beatriz', role: 'Gerente' },
+                { id: 3, name: 'Maria Luisa', username: 'maria', role: 'Vendedor' },
+                { id: 4, name: 'Thainá Costa', username: 'thaina', role: 'Vendedor' }
+            ];
+        }
+    </script>
+</body>
+</html>
