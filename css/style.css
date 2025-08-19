@@ -303,3 +303,7 @@ tbody td {
     border-radius: 5px;
     cursor: pointer;
 }
+
+.product-risk-item {
+    margin-bottom: 20px;
+}

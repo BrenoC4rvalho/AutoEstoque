@@ -102,14 +102,42 @@ function renderDashboard() {
         }
     });
 
+    // Novo Gráfico de Pizza de Produtos Mais Vendidos
+    new Chart(document.getElementById('chart-mais-vendidos-pizza'), {
+        type: 'pie', // Tipo do gráfico
+        data: {
+            labels: labelsVendas, // Reutiliza os labels do gráfico de barras
+            datasets: [{
+                label: 'Quantidade Vendida',
+                data: dataVendas, // Reutiliza os dados do gráfico de barras
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.7)',
+                    'rgba(235, 54, 54, 0.7)',
+                    'rgba(255, 206, 86, 0.7)',
+                    'rgba(75, 192, 192, 0.7)',
+                    'rgba(153, 102, 255, 0.7)',
+                    'rgba(255, 159, 64, 0.7)'
+                ],
+                borderColor: [
+                    'rgb(255, 99, 132)',
+                    'rgb(54, 162, 235)',
+                    'rgb(255, 206, 86)',
+                    'rgb(75, 192, 192)',
+                    'rgb(153, 102, 255)',
+                    'rgb(255, 159, 64)'
+                ],
+                borderWidth: 1
+            }]
+        }
+    });
+
     renderProductsAtRisk();
 }
 
 function renderProductsAtRisk() {
     const tableBody = document.querySelector('#produtos-risco-tabela tbody');
-    tableBody.innerHTML = ''; // Limpa a tabela antes de renderizar
+    tableBody.innerHTML = '';
     
-    // Filtra os produtos com estoque abaixo ou igual ao mínimo
     const produtosEmRisco = mockData.produtos.filter(p => p.quantidade <= p.quantidadeMinima);
 
     if (produtosEmRisco.length === 0) {
@@ -117,9 +145,11 @@ function renderProductsAtRisk() {
         return;
     }
 
-    // Cria uma linha na tabela para cada produto em risco
     produtosEmRisco.forEach(product => {
+        // Altere esta linha para adicionar a classe "product-risk-item"
         const row = document.createElement('tr');
+        row.classList.add('product-risk-item');
+        
         row.innerHTML = `
             <td>${product.nome}</td>
             <td class="status-risk">${product.quantidade}</td>
