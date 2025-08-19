@@ -45,14 +45,19 @@ function renderDashboard() {
             datasets: [{
                 label: 'Quantidade Vendida',
                 data: dataVendas,
-                backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 255, 40, 0.57)', // Altere esta cor
+                borderColor: 'rgba(255, 255, 96, 1)', // Altere esta cor
                 borderWidth: 1
             }]
         },
         options: {
             scales: {
-                y: { beginAtZero: true }
+                y: { 
+                    beginAtZero: true ,
+                    grid: {
+                        drawOnChartArea: false // Esta linha remove a grade do eixo Y
+                    }
+                }
             }
         }
     });
@@ -78,22 +83,52 @@ function renderDashboard() {
                 {
                     label: 'Itens em Risco',
                     data: dataRisco,
-                    backgroundColor: 'rgba(255, 99, 132, 0.5)'
+                    backgroundColor: 'rgba(255, 255, 40, 0.57)', // Altere esta cor
                 },
                 {
                     label: 'Itens OK',
                     data: dataTotal,
-                    backgroundColor: 'rgba(54, 162, 235, 0.5)'
+                    backgroundColor: 'rgba(250, 177, 19, 0.5)' // Altere esta cor
                 }
             ]
         },
         options: {
             scales: {
                 x: { stacked: true },
-                y: { stacked: true, beginAtZero: true }
+                y: { stacked: true, beginAtZero: true, grid: {
+                        drawOnChartArea: false // Esta linha remove a grade do eixo Y
+                    } }
             }
         }
     });
+
+    renderProductsAtRisk();
 }
+
+function renderProductsAtRisk() {
+    const tableBody = document.querySelector('#produtos-risco-tabela tbody');
+    tableBody.innerHTML = ''; // Limpa a tabela antes de renderizar
+    
+    // Filtra os produtos com estoque abaixo ou igual ao mínimo
+    const produtosEmRisco = mockData.produtos.filter(p => p.quantidade <= p.quantidadeMinima);
+
+    if (produtosEmRisco.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="3">Nenhum produto em estoque de risco.</td></tr>';
+        return;
+    }
+
+    // Cria uma linha na tabela para cada produto em risco
+    produtosEmRisco.forEach(product => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${product.nome}</td>
+            <td class="status-risk">${product.quantidade}</td>
+            <td>${product.quantidadeMinima}</td>
+        `;
+        tableBody.appendChild(row);
+    });
+}
+
+document.addEventListener('DOMContentLoaded', renderDashboard);
 
 document.addEventListener('DOMContentLoaded', renderDashboard);
