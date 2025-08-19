@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoStock - Dashboard</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header class="sidebar">
+        <div class="logo">Auto Estoque</div>
+        <nav>
+            <ul>
+                <li><a href="dashboard.html" class="active">Dashboard</a></li>
+                <li><a href="estoque.html">Estoque</a></li>
+                <li><a href="compras.html">Compras</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main class="content">
+        <h1 class="page-title">Dashboard</h1>
+
+        <div class="cards-container">
+            <div class="card card-red">
+                <h3>Estoque em Risco</h3>
+                <p id="estoque-risco-total">0</p>
+            </div>
+            <div class="card card-white">
+                <h3>Total de Vendas</h3>
+                <p id="vendas-mes-total">R$ 0,00</p>
+            </div>
+            <div class="card card-white">
+                <h3>Valor do Estoque</h3>
+                <p id="valor-estoque-total">R$ 0,00</p>
+            </div>
+        </div>
+
+        <div class="charts-container">
+            <div class="chart-box">
+                <h2>Produtos Mais Vendidos</h2>
+                <canvas id="chart-mais-vendidos"></canvas>
+            </div>
+            <div class="chart-box">
+                <h2>Estoque por Categoria</h2>
+                <canvas id="chart-estoque-risco"></canvas>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/dashboard.js"></script>
+</body>
+</html>
